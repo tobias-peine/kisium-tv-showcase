@@ -40,13 +40,13 @@ chmod 600 .vault-pass
 
 ```bash
 cd ansible
-ansible-playbook playbooks/site.yml
+ansible-playbook playbooks/site.yml --vault-password-file .vault-pass
 ```
 
 Nur Syntax prüfen:
 
 ```bash
-ansible-playbook playbooks/site.yml --syntax-check
+ansible-playbook playbooks/site.yml --vault-password-file .vault-pass --syntax-check
 ```
 
 ## TLS aktivieren
