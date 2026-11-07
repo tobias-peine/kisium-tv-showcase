@@ -278,7 +278,7 @@ Der Stack lässt sich über [`ansible/`](ansible/README.md) verwalten:
 
 ```bash
 cd ansible
-ansible-playbook playbooks/site.yml
+ansible-playbook playbooks/site.yml --vault-password-file .vault-pass
 ```
 
 Die Rolle synchronisiert das Projekt, templatet die `.env`, startet Compose,
