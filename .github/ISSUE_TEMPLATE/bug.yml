@@ -1,0 +1,35 @@
+name: Bug report
+description: Einen reproduzierbaren Fehler melden
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Bitte keine Zugangsdaten, Tokens oder privaten Stream-URLs posten.
+  - type: textarea
+    id: what
+    attributes:
+      label: Was ist passiert?
+      description: Erwartetes und tatsächliches Verhalten.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Schritte zur Reproduktion
+      placeholder: |
+        1. ...
+        2. ...
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Gerät / Android-Version
+      placeholder: "waipu.tv Stick, Android TV 11"
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevante Logs (ohne Secrets)
+      render: shell

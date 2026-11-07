@@ -1,0 +1,39 @@
+# Optionaler TLS-Reverse-Proxy für Server außerhalb des reinen LAN.
+# Voraussetzung: PROXY_BIND=127.0.0.1 in .env, damit Port 5000 nicht direkt
+# am Server-Netz hängt. Der Stick nutzt dann https://kisium.example.lan.
+server {
+    listen 80;
+    server_name kisium.example.lan;
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl;
+    http2 on;
+    server_name kisium.example.lan;
+
+    ssl_certificate     /etc/letsencrypt/live/kisium.example.lan/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/kisium.example.lan/privkey.pem;
+
+    client_max_body_size 1m;
+
+    # Admin nur aus dem eigenen LAN erreichbar.
+    location /admin {
+        allow 192.168.0.0/16;
+        deny all;
+        proxy_pass http://127.0.0.1:5000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # Stream-Redirects für Kisium TV.
+    location / {
+        proxy_pass http://127.0.0.1:5000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}

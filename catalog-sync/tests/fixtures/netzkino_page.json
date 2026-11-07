@@ -1,0 +1,52 @@
+{
+  "data": {
+    "allCmsMovies": {
+      "totalCount": 3,
+      "pageInfo": {"hasNextPage": false, "endCursor": null},
+      "nodes": [
+        {
+          "id": "a0U01000000yEuE",
+          "title": "100.000 verdammte Dollar",
+          "longSynopsis": "Ein Revolverheld gerät zwischen Gier, Gold und Verrat.",
+          "mediumSynopsis": null,
+          "shortSynopsis": null,
+          "productionYear": 1967,
+          "rating": 7.1,
+          "runtimeInSeconds": 5400,
+          "coverImage": {"masterUrl": "https://img.example/cover.jpg"},
+          "widescreenImage": {"masterUrl": "https://img.example/wide.jpg"},
+          "videoSource": {"pmdUrl": "Great_Movies_NK/100000_verdammte_Dollar.mp4", "hlsUrl": null, "dashUrl": null},
+          "cmsMovieContentCategoriesByContentMovieId": {"nodes": [{"category": {"title": "Western", "slug": "western"}}]}
+        },
+        {
+          "id": "a0U01000003f1qV",
+          "title": "100° Below Zero",
+          "longSynopsis": null,
+          "mediumSynopsis": "Eiszeit in Paris.",
+          "shortSynopsis": null,
+          "productionYear": 2013,
+          "rating": null,
+          "runtimeInSeconds": null,
+          "coverImage": {"masterUrl": "https://img.example/cover2.jpg"},
+          "widescreenImage": {"masterUrl": null},
+          "videoSource": {"pmdUrl": "Great_Movies/100_Below_Zero.mp4", "hlsUrl": null, "dashUrl": null},
+          "cmsMovieContentCategoriesByContentMovieId": {"nodes": []}
+        },
+        {
+          "id": "dash-only",
+          "title": "Dash only",
+          "longSynopsis": null,
+          "mediumSynopsis": null,
+          "shortSynopsis": null,
+          "productionYear": null,
+          "rating": null,
+          "runtimeInSeconds": null,
+          "coverImage": null,
+          "widescreenImage": null,
+          "videoSource": {"pmdUrl": null, "hlsUrl": null, "dashUrl": "https://example/manifest.mpd"},
+          "cmsMovieContentCategoriesByContentMovieId": {"nodes": []}
+        }
+      ]
+    }
+  }
+}

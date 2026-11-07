@@ -1,0 +1,75 @@
+name: kisium-tv
+
+services:
+  catalog-sync:
+    build:
+      context: ./catalog-sync
+      target: runtime
+    container_name: kisium-catalog-sync
+    user: "${KISIUM_UID:-1000}:${KISIUM_GID:-1000}"
+    env_file:
+      - .env
+    environment:
+      OUTPUT_DIR: /data
+    volumes:
+      - ./data:/data
+    restart: unless-stopped
+    init: true
+    read_only: true
+    tmpfs:
+      - /tmp:size=32m,noexec,nosuid
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "python", "-m", "catalog_sync", "--healthcheck"]
+      interval: 5m
+      timeout: 10s
+      start_period: 2m
+      retries: 3
+    stop_grace_period: 30s
+
+  stream-proxy:
+    build:
+      context: ./stream-proxy
+      target: runtime
+    container_name: kisium-stream-proxy
+    user: "${KISIUM_UID:-1000}:${KISIUM_GID:-1000}"
+    env_file:
+      - .env
+    environment:
+      PROXY_HOST: 0.0.0.0
+      SQLITE_DB_PATH: /data/catalog.sqlite
+      CATALOG_JSON_PATH: /data/catalog.json
+      CATALOG_CACHE_SECONDS: ${CATALOG_CACHE_SECONDS:-60}
+    volumes:
+      # Admin writes manual_movies; stream reads still use SQLite mode=ro.
+      - ./data:/data
+    ports:
+      - "${PROXY_BIND:-0.0.0.0}:${PROXY_PORT:-5000}:${PROXY_PORT:-5000}"
+    depends_on:
+      catalog-sync:
+        condition: service_started
+    restart: unless-stopped
+    init: true
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,noexec,nosuid
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import os,urllib.request; urllib.request.urlopen(f'http://127.0.0.1:{os.getenv(\"PROXY_PORT\",\"5000\")}/healthz', timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+    stop_grace_period: 20s

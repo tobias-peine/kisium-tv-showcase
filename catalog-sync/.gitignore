@@ -1,0 +1,15 @@
+.env
+data/*
+!data/.gitkeep
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+*.sqlite
+*.sqlite-*
+catalog.json
+.e2e-data/
+.e2e-server.py
+.e2e-server.log
+.e2e-server.pid
+sync-status.json

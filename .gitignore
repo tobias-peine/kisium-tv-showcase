@@ -1,0 +1,41 @@
+# App/Build
+.gradle/
+build/
+local.properties
+.idea/
+*.iml
+.DS_Store
+captures/
+.externalNativeBuild/
+.cxx/
+*.jks
+*.keystore
+keystore.properties
+
+# Secrets / Deployment
+.env
+/data/
+catalog-sync/.env
+stream-proxy/.env
+*.log
+.catalog-sync.lock
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+
+# Generated assets / local captures
+screenshots/
+*.apk
+*.aab
+*.mp4
+*.webm
+netzkino-*.json
+netzkino-*.html
+.catalog-sync.lock
+
+# Local Docker/Gradle caches
+.docker-config/
+.gradle-home/
