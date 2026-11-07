@@ -1,0 +1,188 @@
+---
+- name: Validate required secrets
+  ansible.builtin.assert:
+    that:
+      - vault_kisium_proxy_password is defined
+      - vault_kisium_proxy_password | length >= 12
+      - vault_kisium_admin_password is defined
+      - vault_kisium_admin_password | length >= 12
+    fail_msg: "Bitte group_vars/all/vault.yml mit starken Passwörtern anlegen."
+
+- name: Ensure application root
+  ansible.builtin.file:
+    path: "{{ kisium_app_dir }}"
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: "0755"
+
+- name: Ensure data and TLS directories
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: "{{ item.owner }}"
+    group: "{{ item.group }}"
+    mode: "{{ item.mode }}"
+  loop:
+    - { path: "{{ kisium_app_dir }}/data", owner: "{{ kisium_uid }}", group: "{{ kisium_gid }}", mode: "0750" }
+    - { path: "{{ kisium_app_dir }}/tls", owner: "root", group: "root", mode: "0755" }
+
+- name: Sync project from control node
+  ansible.builtin.command:
+    argv:
+      - rsync
+      - -az
+      - --delete
+      - --exclude=.git/
+      - --exclude=.env
+      - --exclude=data/
+      - --exclude=build/
+      - --exclude=*/build/
+      - --exclude=.gradle/
+      - --exclude=.gradle-home/
+      - --exclude=.idea/
+      - --exclude=screenshots/
+      - --exclude=tls/
+      - --exclude=keystore/
+      - --exclude=local.properties
+      - --exclude=__pycache__/
+      - --exclude=.pytest_cache/
+      - "{{ playbook_dir }}/../../"
+      - "{{ ansible_user }}@{{ ansible_host }}:{{ kisium_app_dir }}/"
+  environment:
+    RSYNC_RSH: "ssh -p {{ ansible_port }} -i {{ ansible_ssh_private_key_file }}"
+  delegate_to: localhost
+  become: false
+  changed_when: true
+
+- name: Template environment file
+  ansible.builtin.template:
+    src: env.j2
+    dest: "{{ kisium_app_dir }}/.env"
+    owner: root
+    group: root
+    mode: "0600"
+  no_log: true
+
+- name: Ensure data ownership
+  ansible.builtin.file:
+    path: "{{ kisium_app_dir }}/data"
+    state: directory
+    owner: "{{ kisium_uid }}"
+    group: "{{ kisium_gid }}"
+    mode: "0750"
+
+- name: Validate compose configuration
+  ansible.builtin.command:
+    cmd: docker compose config --quiet
+    chdir: "{{ kisium_app_dir }}"
+  changed_when: false
+
+- name: Start or update stack
+  ansible.builtin.command:
+    cmd: docker compose up -d --build --remove-orphans
+    chdir: "{{ kisium_app_dir }}"
+  register: compose_up
+  changed_when: true
+
+- name: Wait for proxy health
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ kisium_proxy_port }}/healthz"
+    status_code: 200
+    timeout: 5
+  register: health
+  retries: "{{ kisium_health_retries }}"
+  delay: "{{ kisium_health_delay }}"
+  until: health.status == 200
+
+- name: Install TLS gateway config
+  ansible.builtin.template:
+    src: nginx-tls.conf.j2
+    dest: "{{ kisium_app_dir }}/tls/nginx.conf"
+    mode: "0644"
+  when: kisium_tls_enabled
+  notify: restart kisium tls
+
+- name: Ensure Let's Encrypt certificate exists
+  ansible.builtin.stat:
+    path: "{{ kisium_letsencrypt_dir }}/live/{{ kisium_tls_cert_name }}/fullchain.pem"
+  register: kisium_cert
+  when: kisium_tls_enabled
+
+- name: Issue certificate when missing
+  ansible.builtin.command:
+    argv:
+      - docker
+      - exec
+      - "{{ kisium_certbot_container }}"
+      - certbot
+      - certonly
+      - --webroot
+      - -w
+      - /data/letsencrypt-acme-challenge
+      - -d
+      - "{{ kisium_tls_cert_name }}"
+      - --non-interactive
+      - --agree-tos
+      - --register-unsafely-without-email
+  when:
+    - kisium_tls_enabled | bool
+    - not (kisium_cert.stat.exists | default(true))
+
+- name: Remove old TLS gateway container
+  ansible.builtin.command:
+    cmd: docker rm -f {{ kisium_tls_gateway_name }}
+  failed_when: false
+  changed_when: false
+  when: kisium_tls_enabled | bool
+
+- name: Start TLS gateway container
+  ansible.builtin.command:
+    argv:
+      - docker
+      - run
+      - -d
+      - --name
+      - "{{ kisium_tls_gateway_name }}"
+      - --restart
+      - unless-stopped
+      - --network
+      - host
+      - -v
+      - "{{ kisium_letsencrypt_dir }}:/etc/letsencrypt:ro"
+      - -v
+      - "{{ kisium_app_dir }}/tls/nginx.conf:/etc/nginx/conf.d/default.conf:ro"
+      - nginx:alpine
+  register: tls_run
+  changed_when: true
+  when: kisium_tls_enabled | bool
+
+- name: Allow HTTPS port and close public proxy port
+  ansible.builtin.command:
+    argv:
+      - ufw
+      - "{{ item }}"
+  loop:
+    - "allow {{ kisium_tls_port }}/tcp"
+    - "delete allow {{ kisium_proxy_port }}/tcp"
+  changed_when: true
+  failed_when: false
+  when: kisium_tls_enabled
+
+- name: Install maintenance cron jobs
+  ansible.builtin.template:
+    src: kisium-backup.cron.j2
+    dest: /etc/cron.d/kisium-tls-renew
+    owner: root
+    group: root
+    mode: "0644"
+  when: kisium_tls_enabled and kisium_backup_enabled
+
+- name: Ensure backup directory
+  ansible.builtin.file:
+    path: "{{ kisium_backup_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0700"
+  when: kisium_backup_enabled

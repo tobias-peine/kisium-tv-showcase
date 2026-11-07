@@ -1,0 +1,15 @@
+kisium_domain: tv.example.com
+kisium_app_dir: /opt/kisium-tv
+kisium_uid: 1000
+kisium_gid: 1000
+kisium_proxy_port: 5000
+kisium_tls_port: 8443
+kisium_proxy_bind: 127.0.0.1
+kisium_vod_feed_url: https://data.netzkino.de/netzkino/graphql
+kisium_tls_enabled: false
+kisium_tls_gateway_name: kisium-tls
+kisium_certbot_container: certbot
+kisium_letsencrypt_dir: /etc/letsencrypt
+kisium_tls_cert_name: tv.example.com
+kisium_backup_enabled: true
+kisium_backup_dir: /var/backups/kisium

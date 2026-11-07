@@ -1,0 +1,6 @@
+---
+- name: Deploy and manage Kisium TV
+  hosts: kisium_vps
+  become: true
+  roles:
+    - kisium_stack

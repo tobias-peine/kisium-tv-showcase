@@ -1,0 +1,3 @@
+kisium_compose_file: docker-compose.yml
+kisium_health_retries: 60
+kisium_health_delay: 3

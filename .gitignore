@@ -39,3 +39,7 @@ netzkino-*.html
 # Local Docker/Gradle caches
 .docker-config/
 .gradle-home/
+
+# Ansible secrets
+ansible/.vault-pass
+ansible/inventory/group_vars/all/vault.yml

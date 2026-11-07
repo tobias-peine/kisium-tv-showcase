@@ -272,6 +272,20 @@ Für eine eigene Instanz müssen Domain, Proxy-Zugang und der Kotlin-Default in
 `core-model/.../Models.kt` angepasst werden. Das Showcase-Repository enthält
 absichtlich keine echte Serveradresse und keine Zugangsdaten.
 
+## Ansible-Verwaltung
+
+Der Stack lässt sich über [`ansible/`](ansible/README.md) verwalten:
+
+```bash
+cd ansible
+ansible-playbook playbooks/site.yml
+```
+
+Die Rolle synchronisiert das Projekt, templatet die `.env`, startet Compose,
+prüft den Healthcheck, verwaltet optional das TLS-Gateway, UFW und Cronjobs.
+Secrets gehören in `ansible/inventory/group_vars/all/vault.yml` und werden mit
+`ansible-vault` verschlüsselt.
+
 ## Architektur
 
 - **MVVM**: `MainViewModel` hält Screen-, Home-, Detail-, Live- und Player-State.
